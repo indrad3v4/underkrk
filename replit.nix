@@ -1,5 +1,7 @@
 { pkgs }: {
   deps = [
+    pkgs.sqlite
+    pkgs.python311Packages.pytest
     pkgs.zlib
     pkgs.tk
     pkgs.tcl

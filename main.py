@@ -1,13 +1,12 @@
 import os
 import json
+import asyncio
 from quart import Quart, request, jsonify
 from telegram import Update
 from telegram.ext import ApplicationBuilder
 from bot.handlers import setup_handlers
-from logs import error_logger
+from logs import log_error
 from app.models import Rave
-import asyncio
-from jinja2 import Markup  # Updated import
 
 # Initialize Quart app
 app = Quart(__name__)
@@ -49,7 +48,7 @@ async def webhook():
         application.update_queue.put(update)
         return "OK", 200
     except Exception as e:
-        error_logger.error("Failed to process webhook", exc_info=True)
+        log_error("Failed to process webhook", exc_info=True)
         return "Internal Server Error", 500
 
 async def set_webhook():
@@ -57,7 +56,7 @@ async def set_webhook():
         # Set webhook URL
         await application.bot.set_webhook(url=webhook_url)
     except Exception as e:
-        error_logger.error("Failed to set webhook", exc_info=True)
+        log_error("Failed to set webhook", exc_info=True)
 
 # Endpoint to handle updates
 @app.route('/update_event', methods=['POST'])
@@ -85,40 +84,25 @@ async def add_participant():
     role = data.get('role')
     verification_link = data.get('verification_link')
 
-    try:
-        rave_model.add_participant(user_id, role, verification_link)
-        save_rave_model()  # Use synchronous file handling here
-        return jsonify({"status": "success"}), 200
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    Rave.add_participant(user_id, role, verification_link)
+    return jsonify({"status": "success"}), 200
 
-# Endpoint to verify a participant
-@app.route('/verify_participant', methods=['POST'])
-async def verify_participant():
+# Endpoint to update a participant
+@app.route('/update_participant', methods=['POST'])
+async def update_participant():
     data = await request.get_json()
     user_id = data.get('user_id')
+    role = data.get('role')
+    verification_link = data.get('verification_link')
 
-    try:
-        result = rave_model.verify_participant(user_id)
-        save_rave_model()  # Use synchronous file handling here
-        return jsonify({"status": "success", "verified": result}), 200
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    Rave.update_participant(user_id, role, verification_link)
+    return jsonify({"status": "success"}), 200
 
-# Endpoint to add a donation
-@app.route('/add_donation', methods=['POST'])
-async def add_donation():
-    data = await request.get_json()
-    user_id = data.get('user_id')
-    amount = data.get('amount')
-    element = data.get('element')
-
-    try:
-        rave_model.add_donation(user_id, amount, element)
-        save_rave_model()  # Use synchronous file handling here
-        return jsonify({"status": "success"}), 200
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+# Endpoint to get participants
+@app.route('/get_participants', methods=['GET'])
+async def get_participants():
+    participants = Rave.get_participants()
+    return jsonify(participants), 200
 
 # Save the updated rave model to the JSON file
 def save_rave_model():
@@ -127,7 +111,7 @@ def save_rave_model():
         with open(file_path, 'w') as file:
             json.dump(rave_model.to_dict(), file, indent=4)
     except Exception as e:
-        error_logger.error("Failed to save rave model", exc_info=True)
+        log_error("Failed to save rave model", exc_info=True)
         raise
 
 if __name__ == '__main__':
@@ -136,4 +120,4 @@ if __name__ == '__main__':
         asyncio.run(set_webhook())
         app.run(port=int(os.getenv("PORT", 8443)))
     except Exception as e:
-        error_logger.error("Failed to start the application", exc_info=True)
+        log_error("Failed to start the application", exc_info=True)

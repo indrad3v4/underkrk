@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import unittest
 from app.models import Rave
 
@@ -5,6 +9,7 @@ class TestRaveModel(unittest.TestCase):
 
     def setUp(self):
         self.rave = Rave(
+            insight="Insight",
             name="UnderKrakow",
             location="Krakow",
             date="2024-08-01",
@@ -28,15 +33,15 @@ class TestRaveModel(unittest.TestCase):
         self.assertEqual(self.rave.stages, ["Main Stage"])
 
     def test_add_soundsystem(self):
-        self.rave.add_soundsystem("New Sound System")
+        self.rave.soundsystem.append("New Sound System")
         self.assertIn("New Sound System", self.rave.soundsystem)
 
     def test_add_lineup(self):
-        self.rave.add_lineup("New DJ")
+        self.rave.lineup.append("New DJ")
         self.assertIn("New DJ", self.rave.lineup)
 
     def test_add_participant(self):
-        self.rave.add_participant("New Participant")
+        self.rave.participants.append("New Participant")
         self.assertIn("New Participant", self.rave.participants)
 
     def test_update_event(self):

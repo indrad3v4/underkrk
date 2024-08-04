@@ -1,7 +1,6 @@
 import json
-import logging
 import sqlite3
-from logs import log_error
+from logs import log_error  # Correct import
 
 # Connect to SQLite database (create if not exists)
 conn = sqlite3.connect('raves.db')
@@ -22,6 +21,16 @@ CREATE TABLE IF NOT EXISTS raves (
     participants TEXT,
     stages TEXT,
     donations TEXT
+)
+''')
+
+# Create table for participants if it doesn't exist
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS participants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT,
+    role TEXT,
+    verification_link TEXT
 )
 ''')
 conn.commit()
@@ -55,6 +64,45 @@ class Rave:
             log_error("Failed to save rave to database", exc_info=True, rave=self.__dict__)
 
     @staticmethod
+    def add_participant(user_id, role, verification_link):
+        try:
+            cursor.execute('''
+                INSERT INTO participants (user_id, role, verification_link)
+                VALUES (?, ?, ?)
+            ''', (user_id, role, verification_link))
+            conn.commit()
+        except Exception as e:
+            log_error("Failed to add participant to database", exc_info=True, user_id=user_id, role=role, verification_link=verification_link)
+
+    @staticmethod
+    def update_participant(user_id, role=None, verification_link=None):
+        try:
+            if role:
+                cursor.execute('''
+                    UPDATE participants
+                    SET role = ?
+                    WHERE user_id = ?
+                ''', (role, user_id))
+            if verification_link:
+                cursor.execute('''
+                    UPDATE participants
+                    SET verification_link = ?
+                    WHERE user_id = ?
+                ''', (verification_link, user_id))
+            conn.commit()
+        except Exception as e:
+            log_error("Failed to update participant in database", exc_info=True, user_id=user_id, role=role, verification_link=verification_link)
+
+    @staticmethod
+    def get_participants():
+        try:
+            cursor.execute('SELECT * FROM participants')
+            return cursor.fetchall()
+        except Exception as e:
+            log_error("Failed to retrieve participants from database", exc_info=True)
+            return []
+
+    @staticmethod
     def load_from_db(rave_id):
         try:
             cursor.execute('SELECT * FROM raves WHERE id = ?', (rave_id,))
@@ -84,10 +132,3 @@ class Rave:
         except Exception as e:
             log_error("Failed to load raves from database", exc_info=True)
             return []
-
-# Example usage
-rave = Rave("Insight", "Rave Name", "Location", "2024-08-04", "Style", 120)
-rave.save_to_db()
-
-loaded_rave = Rave.load_from_db(1)
-print(loaded_rave.__dict__ if loaded_rave else "No rave found")

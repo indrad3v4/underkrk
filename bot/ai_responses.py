@@ -2,7 +2,8 @@ import os
 from openai import OpenAI
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
-from logs import logging, error_logger
+import logging
+from logs import error_logger
 
 # Initialize OpenAI client
 MODEL = "gpt-4o-mini"
