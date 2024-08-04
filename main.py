@@ -7,6 +7,7 @@ from bot.handlers import setup_handlers
 from logs import error_logger
 from app.models import Rave
 import asyncio
+from jinja2 import Markup  # Updated import
 
 # Initialize Quart app
 app = Quart(__name__)
@@ -65,7 +66,7 @@ async def update_event():
     file_path = os.path.join('data', 'events.json')
 
     try:
-        async with open(file_path, 'r+') as file:
+        with open(file_path, 'r+') as file:
             event_data = json.load(file)
             # Update event_data with new data
             event_data.update(data)
@@ -86,7 +87,7 @@ async def add_participant():
 
     try:
         rave_model.add_participant(user_id, role, verification_link)
-        await save_rave_model()
+        save_rave_model()  # Use synchronous file handling here
         return jsonify({"status": "success"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -99,7 +100,7 @@ async def verify_participant():
 
     try:
         result = rave_model.verify_participant(user_id)
-        await save_rave_model()
+        save_rave_model()  # Use synchronous file handling here
         return jsonify({"status": "success", "verified": result}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -114,20 +115,20 @@ async def add_donation():
 
     try:
         rave_model.add_donation(user_id, amount, element)
-        await save_rave_model()
+        save_rave_model()  # Use synchronous file handling here
         return jsonify({"status": "success"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # Save the updated rave model to the JSON file
-async def save_rave_model():
+def save_rave_model():
     file_path = os.path.join('data', 'events.json')
     try:
-        async with open(file_path, 'w') as file:
+        with open(file_path, 'w') as file:
             json.dump(rave_model.to_dict(), file, indent=4)
     except Exception as e:
         error_logger.error("Failed to save rave model", exc_info=True)
-        raise e
+        raise
 
 if __name__ == '__main__':
     try:

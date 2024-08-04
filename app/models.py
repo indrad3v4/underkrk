@@ -1,9 +1,33 @@
 import json
+import logging
+import sqlite3
+from logs import log_error
 
-from logs import error_logger
+# Connect to SQLite database (create if not exists)
+conn = sqlite3.connect('raves.db')
+cursor = conn.cursor()
+
+# Create table for raves if it doesn't exist
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS raves (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    insight TEXT,
+    name TEXT,
+    location TEXT,
+    date TEXT,
+    style TEXT,
+    bpm INTEGER,
+    soundsystem TEXT,
+    lineup TEXT,
+    participants TEXT,
+    stages TEXT,
+    donations TEXT
+)
+''')
+conn.commit()
 
 class Rave:
-    def __init__(self, insight, name, location, date, style, bpm, soundsystem=None, lineup=None, participants=None, stages=None):
+    def __init__(self, insight, name, location, date, style, bpm, soundsystem=None, lineup=None, participants=None, stages=None, donations=None):
         self.insight = insight
         self.name = name
         self.location = location
@@ -14,91 +38,56 @@ class Rave:
         self.lineup = lineup if lineup else []
         self.participants = participants if participants else []
         self.stages = stages if stages else ["Main Stage"]
+        self.donations = donations if donations else []
 
-    def update_event(self, location=None, date=None, style=None, bpm=None, soundsystem=None, lineup=None):
-        if location:
-            self.location = location
-        if date:
-            self.date = date
-        if style:
-            self.style = style
-        if bpm:
-            self.bpm = bpm
-        if soundsystem:
-            self.soundsystem = soundsystem
-        if lineup:
-            self.lineup = lineup
-
-    def add_participant(self, user_id, role, verification_link=None):
-        participant = {
-            "user_id": user_id,
-            "role": role,
-            "verification_link": verification_link,
-            "verified": False
-        }
-        self.participants.append(participant)
-
-    def verify_participant(self, user_id):
-        for participant in self.participants:
-            if participant["user_id"] == user_id:
-                participant["verified"] = True
-                return True
-        return False
-
-    def add_donation(self, user_id, amount, element):
-        donation = {
-            "user_id": user_id,
-            "amount": amount,
-            "element": element
-        }
-        self.donations.append(donation)
-
-    def to_dict(self):
-        return {
-            "insight": self.insight,
-            "name": self.name,
-            "location": self.location,
-            "date": self.date,
-            "style": self.style,
-            "bpm": self.bpm,
-            "soundsystem": self.soundsystem,
-            "lineup": self.lineup,
-            "participants": self.participants,
-            "stages": self.stages
-        }
-
-    @classmethod
-    def from_dict(cls, data):
-        return cls(
-            insight=data.get("insight", ""),
-            name=data.get("name", ""),
-            location=data.get("location", ""),
-            date=data.get("date", ""),
-            style=data.get("style", ""),
-            bpm=data.get("bpm", 0),
-            soundsystem=data.get("soundsystem", []),
-            lineup=data.get("lineup", []),
-            participants=data.get("participants", []),
-            stages=data.get("stages", ["Main Stage"])
-        )
-
-    @classmethod
-    def load_from_file(cls, file_path):
+    def save_to_db(self):
         try:
-            with open(file_path, "r") as file:
-                if file.read().strip():  # Check if the file is not empty
-                    file.seek(0)  # Reset file pointer to the beginning
-                    data = json.load(file)
-                    # process data...
-                    return cls.from_dict(data)
-                else:
-                    raise ValueError("File is empty")
-        except json.JSONDecodeError as e:
-            print("JSON decoding error:", e)
-            return None
-        except FileNotFoundError as e:
-            print("File not found error:", e)
-            return None
+            cursor.execute('''
+                INSERT INTO raves (insight, name, location, date, style, bpm, soundsystem, lineup, participants, stages, donations)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                self.insight, self.name, self.location, self.date, self.style, self.bpm,
+                json.dumps(self.soundsystem), json.dumps(self.lineup),
+                json.dumps(self.participants), json.dumps(self.stages), json.dumps(self.donations)
+            ))
+            conn.commit()
         except Exception as e:
-            print("An unexpected error occurred:", e)
-            return None
+            log_error("Failed to save rave to database", exc_info=True, rave=self.__dict__)
+
+    @staticmethod
+    def load_from_db(rave_id):
+        try:
+            cursor.execute('SELECT * FROM raves WHERE id = ?', (rave_id,))
+            row = cursor.fetchone()
+            if row:
+                return Rave(
+                    insight=row[1], name=row[2], location=row[3], date=row[4],
+                    style=row[5], bpm=row[6], soundsystem=json.loads(row[7]),
+                    lineup=json.loads(row[8]), participants=json.loads(row[9]),
+                    stages=json.loads(row[10]), donations=json.loads(row[11])
+                )
+        except Exception as e:
+            log_error("Failed to load rave from database", exc_info=True, rave_id=rave_id)
+        return None
+
+    @staticmethod
+    def load_all_from_db():
+        try:
+            cursor.execute('SELECT * FROM raves')
+            rows = cursor.fetchall()
+            return [Rave(
+                insight=row[1], name=row[2], location=row[3], date=row[4],
+                style=row[5], bpm=row[6], soundsystem=json.loads(row[7]),
+                lineup=json.loads(row[8]), participants=json.loads(row[9]),
+                stages=json.loads(row[10]), donations=json.loads(row[11])
+            ) for row in rows]
+        except Exception as e:
+            log_error("Failed to load raves from database", exc_info=True)
+            return []
+
+# Example usage
+rave = Rave("Insight", "Rave Name", "Location", "2024-08-04", "Style", 120)
+rave.save_to_db()
+
+loaded_rave = Rave.load_from_db(1)
+print(loaded_rave.__dict__ if loaded_rave else "No rave found")
