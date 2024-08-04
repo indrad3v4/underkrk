@@ -1,0 +1,5 @@
+quart==0.17.0
+aiogram==2.21
+aiofiles==23.1.0
+python-dotenv==1.0.0
+werkzeug==3.0.0

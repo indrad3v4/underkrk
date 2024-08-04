@@ -1,0 +1,11 @@
+{
+    "name": "UnderKrakow Rave",
+    "location": "Under bridge in Scenic place under Krakow",
+    "date": "2024-08-17 from 12:00 PM",
+    "style": "ravecore",
+    "bpm": 150,
+    "soundsystem": ["Default Sound System"],
+    "lineup": ["indradeva", "glebalisation"],
+    "participants": [],
+    "stages": ["Main Stage"]
+}
