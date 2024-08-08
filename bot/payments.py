@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import CallbackContext, CallbackQueryHandler
 import logging
-from logs import error_logger
+from logs.logs import log_error
 from app.models import Rave
 import json
 

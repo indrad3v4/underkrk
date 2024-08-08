@@ -1,7 +1,7 @@
 import os
 import json
 # from dotenv import load_dotenv
-from logs import error_logger
+from logs.logs import log_error
 
 def load_env_vars(env_file=".env"):
     """

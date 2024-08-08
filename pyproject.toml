@@ -14,6 +14,7 @@ openai = "^1.35.14"
 aiogram = "^3.10.0"
 flask = "^3.0.3"
 quart = "^0.19.6"
+bitdust = "^0.1.12.245"
 
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md

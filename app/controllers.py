@@ -1,7 +1,9 @@
 from app.models import Rave
 from app.utils import read_json, write_json, validate_date, validate_bpm, validate_soundsystem, validate_lineup, validate_participants
 from flask import jsonify
-from logs import error_logger
+from logs.logs import log_error, log_info
+from openai import OpenAI
+import os
 
 class RaveController:
     def __init__(self, rave_model, ai_client, group_chat_id, verification_chat_id):
@@ -24,8 +26,10 @@ class RaveController:
 
         try:
             write_json("data/events.json", self.rave_model.to_dict())
+            log_info("Event created successfully: " + name)
+            self.analyze_and_optimize()
         except Exception as e:
-            error_logger.error("Failed to save event data", exc_info=True)
+            log_error("Failed to save event data", exc_info=True)
             return {"error": "Failed to save event data"}
 
         return {"success": "Event created successfully"}
@@ -54,8 +58,10 @@ class RaveController:
 
         try:
             write_json("data/events.json", self.rave_model.to_dict())
+            log_info("Event updated successfully: " + self.rave_model.name)
+            self.analyze_and_optimize()
         except Exception as e:
-            error_logger.error("Failed to update event data", exc_info=True)
+            log_error("Failed to update event data", exc_info=True)
             return {"error": "Failed to update event data"}
 
         return {"success": "Event updated successfully"}
@@ -70,8 +76,10 @@ class RaveController:
 
         try:
             write_json("data/participants.json", self.rave_model.participants)
+            log_info("Participant registered successfully: " + user_id)
+            self.analyze_and_optimize()
         except Exception as e:
-            error_logger.error("Failed to register participant", exc_info=True)
+            log_error("Failed to register participant", exc_info=True)
             return {"error": "Failed to register participant"}
 
         return {"success": "Participant registered successfully"}
@@ -82,8 +90,10 @@ class RaveController:
                 participant["verified"] = True
                 try:
                     write_json("data/participants.json", self.rave_model.participants)
+                    log_info("Participant verified successfully: " + user_id)
+                    self.analyze_and_optimize()
                 except Exception as e:
-                    error_logger.error("Failed to verify participant", exc_info=True)
+                    log_error("Failed to verify participant", exc_info=True)
                     return {"error": "Failed to verify participant"}
                 return {"success": "Participant verified successfully"}
 
@@ -94,14 +104,15 @@ class RaveController:
             completion = self.ai_client.chat_completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": f"You are AI-Powered Rave Coordinator Bot who helps roles in the rave get an ideal rave experience. You base your juicy yet funny tone of voice on values of peace, love, unity, respect. The rave details are: Insight: {self.rave_model.insight}, Sound System: {self.rave_model.soundsystem}, Lineup: {self.rave_model.lineup}, Place: {self.rave_model.place}, Time: {self.rave_model.time}, style='ravecore', bpm={self.rave_model.bpm}, Role: {role}"},
+                    {"role": "system", "content": f"You are AI-Powered Rave Coordinator Bot who helps roles in the rave get an ideal rave experience. You base your juicy yet funny tone of voice on values of peace, love, unity, respect. The rave details are: Insight: {self.rave_model.insight}, Sound System: {self.rave_model.soundsystem}, Lineup: {self.rave_model.lineup}, Place: {self.rave_model.location}, Time: {self.rave_model.date}, style='ravecore', bpm={self.rave_model.bpm}, Role: {role}"},
                     {"role": "user", "content": user_message}
                 ]
             )
             response = completion.choices[0].message.content
+            log_info("AI response generated: " + response)
             return {"response": response}
         except Exception as e:
-            error_logger.error("Failed to generate AI response", exc_info=True)
+            log_error("Failed to generate AI response", exc_info=True)
             return {"error": "Failed to generate AI response"}
 
     def handle_donation(self, user_id, amount, element):
@@ -114,8 +125,38 @@ class RaveController:
 
         try:
             write_json("data/donations.json", self.rave_model.donations)
+            log_info("Donation received successfully: " + user_id + " - " + str(amount))
+            self.analyze_and_optimize()
         except Exception as e:
-            error_logger.error("Failed to handle donation", exc_info=True)
+            log_error("Failed to handle donation", exc_info=True)
             return {"error": "Failed to handle donation"}
 
         return {"success": "Donation received successfully"}
+
+    def analyze_and_optimize(self):
+        try:
+            events, participants, donations, soundsystem = self.load_rave_data()
+            response = self.ai_client.chat_completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are an AI assistant that analyzes rave data and provides optimization suggestions."},
+                    {"role": "user", "content": f"Analyze the following rave data and provide suggestions for optimization:\n\nEvents: {events}\n\nParticipants: {participants}\n\nDonations: {donations}\n\nSoundsystem: {soundsystem}"}
+                ]
+            )
+            analysis = response.choices[0].message.content
+            log_info("AI Analysis and Suggestions:")
+            log_info(analysis)
+            # Implement suggested optimizations (this part would depend on the specific suggestions provided by AI)
+        except Exception as e:
+            log_error("Failed to analyze and optimize rave data", exc_info=True)
+
+    def load_rave_data(self):
+        try:
+            events = read_json("data/events.json")
+            participants = read_json("data/participants.json")
+            donations = read_json("data/donations.json")
+            soundsystem = read_json("data/soundsystem.json")
+            return events, participants, donations, soundsystem
+        except Exception as e:
+            log_error("Exception occurred while loading rave data", exc_info=True)
+            return None, None, None, None

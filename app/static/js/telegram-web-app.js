@@ -1,57 +1,77 @@
 // Initialize Telegram Web App
-Telegram.WebApp.onEvent('DOMContentLoaded', function() {
-    // Set the background color of the Mini App
-    Telegram.WebApp.setBackgroundColor("#ffccff");
+Telegram.WebApp.onEvent('DOMContentLoaded', async function() {
+    try {
+        // Set the background color of the Mini App
+        Telegram.WebApp.setBackgroundColor("#ffccff");
 
-    // Set the header color
-    Telegram.WebApp.setHeaderColor("#660066");
+        // Set the header color
+        Telegram.WebApp.setHeaderColor("#660066");
 
-    // Configure the main button
-    Telegram.WebApp.MainButton.setText("Let’s Groove!");
-    Telegram.WebApp.MainButton.show();
+        // Configure the main button
+        Telegram.WebApp.MainButton.setText("Let’s Groove!");
+        Telegram.WebApp.MainButton.show();
 
-    // Handle main button click
-    Telegram.WebApp.MainButton.onClick(function() {
-        let userInput = document.getElementById("userInput").value;
-        if (userInput) {
-            // Send data back to the bot
-            Telegram.WebApp.sendData(JSON.stringify({ input: userInput }));
-            logInfo("User input sent: " + userInput);
-            updateEvent({ "user_input": userInput });
-        } else {
-            alert("Drop your details to join the rave!");
-        }
-    });
+        // Handle main button click
+        Telegram.WebApp.MainButton.onClick(async function() {
+            let userInput = document.getElementById("userInput").value;
+            if (userInput) {
+                // Send data back to the bot
+                await sendDataToBot(userInput);
+                logInfo("User input sent: " + userInput);
+                await updateEvent({ "user_input": userInput });
+            } else {
+                alert("Drop your details to join the rave!");
+            }
+        });
 
-    // Set up event listeners for real-time theme changes
-    Telegram.WebApp.onEvent('themeChanged', function() {
-        document.body.style.backgroundColor = Telegram.WebApp.themeParams.bg_color;
-        document.body.style.color = Telegram.WebApp.themeParams.text_color;
-        logInfo("Theme changed: " + JSON.stringify(Telegram.WebApp.themeParams));
-    });
+        // Set up event listeners for real-time theme changes
+        Telegram.WebApp.onEvent('themeChanged', function() {
+            document.body.style.backgroundColor = Telegram.WebApp.themeParams.bg_color;
+            document.body.style.color = Telegram.WebApp.themeParams.text_color;
+            logInfo("Theme changed: " + JSON.stringify(Telegram.WebApp.themeParams));
+        });
 
-    // Initialize the app interface
-    initializeAppInterface();
+        // Initialize the app interface
+        await initializeAppInterface();
+    } catch (error) {
+        logError("Error initializing app: " + error);
+    }
 });
 
-function initializeAppInterface() {
-    // Customize the UI based on theme parameters
-    document.body.style.backgroundColor = Telegram.WebApp.themeParams.bg_color;
-    document.body.style.color = Telegram.WebApp.themeParams.text_color;
-    document.body.style.backgroundImage = "url('path/to/rave_background_image.jpg')"; // Add rave-themed background
+async function initializeAppInterface() {
+    try {
+        // Customize the UI based on theme parameters
+        document.body.style.backgroundColor = Telegram.WebApp.themeParams.bg_color;
+        document.body.style.color = Telegram.WebApp.themeParams.text_color;
+        document.body.style.backgroundImage = "url('path/to/rave_background_image.jpg')"; // Add rave-themed background
 
-    // Set the initial values and event listeners for UI elements
-    document.getElementById("header").innerText = "Welcome to the UnderKrakow Rave!";
-    document.getElementById("description").innerText = "Experience the ultimate rave under the scenic skies of Krakow. Please provide your details below.";
+        // Set the initial values and event listeners for UI elements
+        document.getElementById("header").innerText = "Welcome to the UnderKrakow Rave!";
+        document.getElementById("description").innerText = "Experience the ultimate rave under the scenic skies of Krakow. Please provide your details below.";
 
-    // Additional UI setup if needed
+        // Additional UI setup if needed
+    } catch (error) {
+        logError("Error initializing app interface: " + error);
+    }
+}
+
+async function sendDataToBot(userInput) {
+    try {
+        Telegram.WebApp.sendData(JSON.stringify({ input: userInput }));
+    } catch (error) {
+        logError("Error sending data to bot: " + error);
+    }
 }
 
 // Handle data received from the bot
 Telegram.WebApp.onEvent('receiveData', function(data) {
-    let parsedData = JSON.parse(data);
-    document.getElementById("response").innerText = parsedData.response;
-    logInfo("Data received: " + data);
+    try {
+        let parsedData = JSON.parse(data);
+        document.getElementById("response").innerText = parsedData.response;
+        logInfo("Data received: " + data);
+    } catch (error) {
+        logError("Error processing received data: " + error);
+    }
 });
 
 // Main Mini App setup
@@ -90,19 +110,23 @@ Telegram.WebApp.SettingsButton.onClick(function() {
 Telegram.WebApp.CloudStorage.setItem("userPreferences", JSON.stringify({ theme: "dark" })).then(() => {
     logInfo("User preferences saved.");
 }).catch((error) => {
-    logError("Failed to save user preferences: " + error);
+        logError("Failed to save user preferences: " + error);
 });
 
 // Validate data
 Telegram.WebApp.onEvent('initData', function(initData) {
-    let dataCheckString = Telegram.WebApp.initDataUnsafe.data_check_string;
-    let secretKey = 'your_bot_secret_key';
-    let hash = Telegram.WebApp.initDataUnsafe.hash;
+    try {
+        let dataCheckString = Telegram.WebApp.initDataUnsafe.data_check_string;
+        let secretKey = 'your_bot_secret_key';
+        let hash = Telegram.WebApp.initDataUnsafe.hash;
 
-    if (validateData(dataCheckString, secretKey, hash)) {
-        logInfo("Data validation successful.");
-    } else {
-        logError("Data validation failed.");
+        if (validateData(dataCheckString, secretKey, hash)) {
+            logInfo("Data validation successful.");
+        } else {
+            logError("Data validation failed.");
+        }
+    } catch (error) {
+        logError("Error validating data: " + error);
     }
 });
 
@@ -182,22 +206,30 @@ document.getElementById("payWithTether").addEventListener("click", function() {
     processPayment(5000, 'Rave Ticket - Tether', 'tether_provider_token');
 });
 
-function logInfo(message) {
-    fetch('/log', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ level: 'info', message: message })
-    });
+async function logInfo(message) {
+    try {
+        await fetch('/log', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ level: 'info', message: message })
+        });
+    } catch (error) {
+        console.error("Error logging info: " + error);
+    }
 }
 
-function logError(message) {
-    fetch('/log', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ level: 'error', message: message })
-    });
+async function logError(message) {
+    try {
+        await fetch('/log', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ level: 'error', message: message })
+        });
+    } catch (error) {
+        console.error("Error logging error: " + error);
+    }
 }

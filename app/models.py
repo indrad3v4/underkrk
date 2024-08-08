@@ -1,6 +1,6 @@
 import json
 import sqlite3
-from logs import log_error  # Correct import
+from logs.logs import log_error  # Correct import
 
 # Connect to SQLite database (create if not exists)
 conn = sqlite3.connect('raves.db')

@@ -3,7 +3,7 @@ from telegram.ext import ApplicationBuilder
 from app.models import Rave
 from app.utils import load_env_vars
 from bot.handlers import setup_handlers
-from logs import logging, error_logger
+from logs.logs import log_error
 
 # Load environment variables
 load_env_vars()

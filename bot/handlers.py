@@ -18,7 +18,7 @@ from bot.messages import (
 from bot.ai_responses import AIResponses
 from bot.payments import setup_payment_handlers
 from app.models import Rave
-from logs import logging, error_logger
+from logs.logs import log_error
 import os
 
 
