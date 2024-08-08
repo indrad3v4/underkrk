@@ -1,5 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, CallbackContext, ChatMemberHandler, CallbackQueryHandler
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, CallbackContext, ChatMemberHandler
 from bot.messages import (
     WELCOME_MESSAGE,
     ROLE_INSTRUCTIONS,
@@ -152,19 +152,19 @@ class RaveBot:
 
     def update_soundsystem(self, link):
         new_soundsystem = f"New sound system provided: {link}"
-        self.rave_model.update_soundsystem(new_soundsystem)
+        self.rave_model.add_soundsystem(new_soundsystem, self.rave_model.id)
         self.announce_update("soundsystem")
 
     def update_lineup(self, link):
         new_lineup = f"New DJ added: {link}"
-        self.rave_model.update_lineup(new_lineup)
+        self.rave_model.add_lineup(new_lineup, self.rave_model.id)
         self.announce_update("lineup")
 
     def announce_update(self, update_type):
         if update_type == "soundsystem":
-            message = f"Updated Soundsystem: {self.rave_model.soundsystem}"
+            message = f"Updated Soundsystem: {self.rave_model.get_soundsystem(self.rave_model.id)}"
         elif update_type == "lineup":
-            message = f"Updated Lineup: {self.rave_model.lineup}"
+            message = f"Updated Lineup: {self.rave_model.get_lineup(self.rave_model.id)}"
         else:
             message = "Unknown update type"
         application.bot.send_message(chat_id=self.group_chat_id, text=message)

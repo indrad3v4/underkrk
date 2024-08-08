@@ -183,85 +183,84 @@ class Rave:
         except Exception as e:
             log_error("Failed to load raves from database", exc_info=True)
             return []
-        
-        @staticmethod
-        def add_soundsystem(name, rave_id):
-            try:
-                cursor.execute('''
-                    INSERT INTO soundsystem (name, rave_id)
-                    VALUES (?, ?)
-                ''', (name, rave_id))
-                conn.commit()
-            except Exception as e:
-                log_error("Failed to add soundsystem to database", exc_info=True, name=name, rave_id=rave_id)
-        
-        @staticmethod
-        def get_soundsystem(rave_id):
-            try:
-                cursor.execute('SELECT name FROM soundsystem WHERE rave_id = ?', (rave_id,))
-                return cursor.fetchall()
-            except Exception as e:
-                log_error("Failed to retrieve soundsystem from database", exc_info=True)
-                return []
-        
-        @staticmethod
-        def add_lineup(artist_name, rave_id):
-            try:
-                cursor.execute('''
-                    INSERT INTO lineup (artist_name, rave_id)
-                    VALUES (?, ?)
-                ''', (artist_name, rave_id))
-                conn.commit()
-            except Exception as e:
-                log_error("Failed to add lineup to database", exc_info=True, artist_name=artist_name, rave_id=rave_id)
-        
-        @staticmethod
-        def get_lineup(rave_id):
-            try:
-                cursor.execute('SELECT artist_name FROM lineup WHERE rave_id = ?', (rave_id,))
-                return cursor.fetchall()
-            except Exception as e:
-                log_error("Failed to retrieve lineup from database", exc_info=True)
-                return []
-        
-        @staticmethod
-        def add_stage(name, rave_id):
-            try:
-                cursor.execute('''
-                    INSERT INTO stages (name, rave_id)
-                    VALUES (?, ?)
-                ''', (name, rave_id))
-                conn.commit()
-            except Exception as e:
-                log_error("Failed to add stage to database", exc_info=True, name=name, rave_id=rave_id)
-        
-        @staticmethod
-        def get_stages(rave_id):
-            try:
-                cursor.execute('SELECT name FROM stages WHERE rave_id = ?', (rave_id,))
-                return cursor.fetchall()
-            except Exception as e:
-                log_error("Failed to retrieve stages from database", exc_info=True)
-                return []
-        
-        @staticmethod
-        def add_donation(user_id, amount, element, rave_id):
-            try:
-                cursor.execute('''
-                    INSERT INTO donations (user_id, amount, element, rave_id)
-                    VALUES (?, ?, ?, ?)
-                ''', (user_id, amount, element, rave_id))
-                conn.commit()
-            except Exception as e:
-                log_error("Failed to add donation to database", exc_info=True, user_id=user_id, amount=amount, element=element, rave_id=rave_id)
-        
-        @staticmethod
-        def get_donations(rave_id):
-            try:
-                cursor.execute('SELECT user_id, amount, element FROM donations WHERE rave_id = ?', (rave_id,))
-                return cursor.fetchall()
-            except Exception as e:
-                log_error("Failed to retrieve donations from database", exc_info=True)
-                return []
-        
-        
+
+    @staticmethod
+    def add_soundsystem(name, rave_id):
+        try:
+            cursor.execute('''
+                INSERT INTO soundsystem (name, rave_id)
+                VALUES (?, ?)
+            ''', (name, rave_id))
+            conn.commit()
+        except Exception as e:
+            log_error("Failed to add soundsystem to database", exc_info=True, name=name, rave_id=rave_id)
+
+    @staticmethod
+    def get_soundsystem(rave_id):
+        try:
+            cursor.execute('SELECT name FROM soundsystem WHERE rave_id = ?', (rave_id,))
+            return cursor.fetchall()
+        except Exception as e:
+            log_error("Failed to retrieve soundsystem from database", exc_info=True)
+            return []
+    
+    @staticmethod
+    def add_lineup(artist_name, rave_id):
+        try:
+            cursor.execute('''
+                INSERT INTO lineup (artist_name, rave_id)
+                VALUES (?, ?)
+            ''', (artist_name, rave_id))
+            conn.commit()
+        except Exception as e:
+            log_error("Failed to add lineup to database", exc_info=True, artist_name=artist_name, rave_id=rave_id)
+    
+    @staticmethod
+    def get_lineup(rave_id):
+        try:
+            cursor.execute('SELECT artist_name FROM lineup WHERE rave_id = ?', (rave_id,))
+            return cursor.fetchall()
+        except Exception as e:
+            log_error("Failed to retrieve lineup from database", exc_info=True)
+            return []
+    
+    @staticmethod
+    def add_stage(name, rave_id):
+        try:
+            cursor.execute('''
+                INSERT INTO stages (name, rave_id)
+                VALUES (?, ?)
+            ''', (name, rave_id))
+            conn.commit()
+        except Exception as e:
+            log_error("Failed to add stage to database", exc_info=True, name=name, rave_id=rave_id)
+    
+    @staticmethod
+    def get_stages(rave_id):
+        try:
+            cursor.execute('SELECT name FROM stages WHERE rave_id = ?', (rave_id,))
+            return cursor.fetchall()
+        except Exception as e:
+            log_error("Failed to retrieve stages from database", exc_info=True)
+            return []
+    
+    @staticmethod
+    def add_donation(user_id, amount, element, rave_id):
+        try:
+            cursor.execute('''
+                INSERT INTO donations (user_id, amount, element, rave_id)
+                VALUES (?, ?, ?, ?)
+            ''', (user_id, amount, element, rave_id))
+            conn.commit()
+        except Exception as e:
+            log_error("Failed to add donation to database", exc_info=True, user_id=user_id, amount=amount, element=element, rave_id=rave_id)
+    
+    @staticmethod
+    def get_donations(rave_id):
+        try:
+            cursor.execute('SELECT user_id, amount, element FROM donations WHERE rave_id = ?', (rave_id,))
+            return cursor.fetchall()
+        except Exception as e:
+            log_error("Failed to retrieve donations from database", exc_info=True)
+            return []
+    

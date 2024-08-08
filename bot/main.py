@@ -1,5 +1,6 @@
 import os
-from telegram.ext import ApplicationBuilder
+from telegram.ext import ApplicationBuilder, 
+from telegram import Update
 from app.models import Rave
 from app.utils import load_env_vars
 from bot.handlers import setup_handlers

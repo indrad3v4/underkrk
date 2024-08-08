@@ -6,7 +6,7 @@ import os
 
 # Initialize OpenAI client
 MODEL = "gpt-4o-mini"
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 def index():
     """
@@ -90,3 +90,4 @@ def analyze_data_and_optimize(rave_model):
         # Implement suggested optimizations (this part would depend on the specific suggestions provided by AI)
     except Exception as e:
         log_error("Failed to analyze and optimize rave data", exc_info=True)
+

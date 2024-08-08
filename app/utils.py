@@ -1,18 +1,19 @@
 import os
 import json
-# from dotenv import load_dotenv
 from logs.logs import log_error
 
-def load_env_vars(env_file=".env"):
+def load_env_vars():
     """
-    Load environment variables from a .env file.
+    Load environment variables from Replit secrets.
     """
-    if os.path.exists(env_file):
-        load_dotenv(env_file)
-        print(f"Loaded environment variables from {env_file}")
-    else:
-        error_logger.error(f"{env_file} not found.")
-        raise FileNotFoundError(f"{env_file} not found.")
+    required_vars = ["TELEGRAM_BOT_TOKEN", "GROUP_CHAT_ID", "VERIFICATION_CHAT_ID", "OPENAI_API_KEY", "WEBHOOK_URL"]
+    missing_vars = [var for var in required_vars if var not in os.environ]
+
+    if missing_vars:
+        log_error(f"Missing required environment variables: {', '.join(missing_vars)}")
+        raise EnvironmentError(f"Missing required environment variables: {', '.join(missing_vars)}")
+
+    print("Loaded environment variables from Replit secrets")
 
 def read_json(file_path):
     """
@@ -23,7 +24,7 @@ def read_json(file_path):
             data = json.load(file)
         return data
     else:
-        error_logger.error(f"File {file_path} not found.")
+        log_error(f"File {file_path} not found.")
         raise FileNotFoundError(f"File {file_path} not found.")
 
 def write_json(file_path, data):
@@ -35,7 +36,7 @@ def write_json(file_path, data):
             json.dump(data, file, indent=4)
         print(f"Data successfully written to {file_path}")
     except Exception as e:
-        error_logger.error(f"Failed to write data to {file_path}", exc_info=True)
+        log_error(f"Failed to write data to {file_path}", exc_info=True)
         raise e
 
 def validate_date(date_str):
