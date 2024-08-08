@@ -1,5 +1,4 @@
 from app.models import Rave
-from app.utils import read_json, write_json, validate_date, validate_bpm, validate_soundsystem, validate_lineup, validate_participants
 from flask import jsonify
 from logs.logs import log_error, log_info
 from openai import OpenAI
@@ -25,7 +24,7 @@ class RaveController:
         self.rave_model.bpm = bpm
 
         try:
-            write_json("data/events.json", self.rave_model.to_dict())
+            self.rave_model.save_to_db()
             log_info("Event created successfully: " + name)
             self.analyze_and_optimize()
         except Exception as e:
@@ -57,7 +56,7 @@ class RaveController:
             self.rave_model.lineup = lineup
 
         try:
-            write_json("data/events.json", self.rave_model.to_dict())
+            self.rave_model.save_to_db()
             log_info("Event updated successfully: " + self.rave_model.name)
             self.analyze_and_optimize()
         except Exception as e:
@@ -67,15 +66,8 @@ class RaveController:
         return {"success": "Event updated successfully"}
 
     def register_participant(self, user_id, role, verification_link=None):
-        participant = {
-            "user_id": user_id,
-            "role": role,
-            "verification_link": verification_link
-        }
-        self.rave_model.participants.append(participant)
-
         try:
-            write_json("data/participants.json", self.rave_model.participants)
+            Rave.add_participant(user_id, role, verification_link, self.rave_model.id)
             log_info("Participant registered successfully: " + user_id)
             self.analyze_and_optimize()
         except Exception as e:
@@ -85,17 +77,18 @@ class RaveController:
         return {"success": "Participant registered successfully"}
 
     def verify_participant(self, user_id):
-        for participant in self.rave_model.participants:
-            if participant["user_id"] == user_id:
-                participant["verified"] = True
-                try:
-                    write_json("data/participants.json", self.rave_model.participants)
+        try:
+            participants = Rave.get_participants()
+            for participant in participants:
+                if participant["user_id"] == user_id:
+                    participant["verified"] = True
+                    Rave.update_participant(user_id, participant["role"], participant["verification_link"], self.rave_model.id)
                     log_info("Participant verified successfully: " + user_id)
                     self.analyze_and_optimize()
-                except Exception as e:
-                    log_error("Failed to verify participant", exc_info=True)
-                    return {"error": "Failed to verify participant"}
-                return {"success": "Participant verified successfully"}
+                    return {"success": "Participant verified successfully"}
+        except Exception as e:
+            log_error("Failed to verify participant", exc_info=True)
+            return {"error": "Failed to verify participant"}
 
         return {"error": "Participant not found"}
 
@@ -116,15 +109,8 @@ class RaveController:
             return {"error": "Failed to generate AI response"}
 
     def handle_donation(self, user_id, amount, element):
-        donation = {
-            "user_id": user_id,
-            "amount": amount,
-            "element": element
-        }
-        self.rave_model.donations.append(donation)
-
         try:
-            write_json("data/donations.json", self.rave_model.donations)
+            Rave.add_donation(user_id, amount, element, self.rave_model.id)
             log_info("Donation received successfully: " + user_id + " - " + str(amount))
             self.analyze_and_optimize()
         except Exception as e:
@@ -152,11 +138,8 @@ class RaveController:
 
     def load_rave_data(self):
         try:
-            events = read_json("data/events.json")
-            participants = read_json("data/participants.json")
-            donations = read_json("data/donations.json")
-            soundsystem = read_json("data/soundsystem.json")
-            return events, participants, donations, soundsystem
+            rave = Rave.load_from_db(self.rave_model.id)
+            return rave.name, rave.participants, rave.donations, rave.soundsystem
         except Exception as e:
             log_error("Exception occurred while loading rave data", exc_info=True)
             return None, None, None, None

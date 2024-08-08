@@ -5,7 +5,7 @@ from quart import Quart, request, jsonify
 from telegram import Update
 from telegram.ext import ApplicationBuilder
 from bot.handlers import setup_handlers
-from logs.logs import log_error  # Corrected import
+from logs.logs import log_error, log_info
 from app.models import Rave  # Ensure this import is correct
 
 # Initialize Quart app
@@ -29,7 +29,7 @@ if rave_model:
     # Set up bot handlers
     setup_handlers(application, rave_model)
 else:
-    print("Failed to initialize rave_model. Handlers not set up.")
+    log_error("Failed to initialize rave_model. Handlers not set up.")
 
 # Quart route for webhook
 @app.route('/webhook', methods=['POST'])
@@ -55,6 +55,8 @@ async def update_event():
     data = await request.get_json()
     try:
         # Update the event data in the database
+        conn = sqlite3.connect('raves.db')
+        cursor = conn.cursor()
         cursor.execute('''
             UPDATE raves
             SET insight = ?, name = ?, location = ?, date = ?, style = ?, bpm = ?, soundsystem = ?, lineup = ?, participants = ?, stages = ?, donations = ?
@@ -79,7 +81,7 @@ async def add_participant():
     verification_link = data.get('verification_link')
 
     try:
-        Rave.add_participant(user_id, role, verification_link)
+        Rave.add_participant(user_id, role, verification_link, rave_model.id)
         return jsonify({"status": "success"}), 200
     except Exception as e:
         log_error("Failed to add participant", exc_info=True)
@@ -94,7 +96,7 @@ async def update_participant():
     verification_link = data.get('verification_link')
 
     try:
-        Rave.update_participant(user_id, role, verification_link)
+        Rave.update_participant(user_id, role, verification_link, rave_model.id)
         return jsonify({"status": "success"}), 200
     except Exception as e:
         log_error("Failed to update participant", exc_info=True)

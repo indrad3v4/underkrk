@@ -3,7 +3,7 @@ from telegram.ext import ApplicationBuilder
 from app.models import Rave
 from app.utils import load_env_vars
 from bot.handlers import setup_handlers
-from logs.logs import log_error
+from logs.logs import log_error, log_info
 
 # Load environment variables
 load_env_vars()
@@ -15,10 +15,26 @@ verification_chat_id = os.getenv("VERIFICATION_CHAT_ID")
 
 # Initialize Rave model
 try:
-    rave_model = Rave.load_from_file("data/events.json")
+    rave_model = Rave.load_from_db(1)
+    if not rave_model:
+        rave_model = Rave(
+            insight="",
+            name="",
+            location="",
+            date="",
+            style="",
+            bpm=0,
+            soundsystem=[],
+            lineup=[],
+            participants=[],
+            stages=["Main Stage"],
+            donations=[]
+        )
+        rave_model.save_to_db()
 except Exception as e:
-    error_logger.error("Exception occurred while loading Rave model", exc_info=True)
+    log_error("Exception occurred while loading Rave model", exc_info=True)
     rave_model = Rave(
+        insight="",
         name="",
         location="",
         date="",
@@ -27,7 +43,8 @@ except Exception as e:
         soundsystem=[],
         lineup=[],
         participants=[],
-        stages=["Main Stage"]
+        stages=["Main Stage"],
+        donations=[]
     )
 
 # Initialize Telegram bot application
@@ -41,9 +58,9 @@ def main():
     try:
         # Run the bot until the user presses Ctrl-C
         application.run_polling(allowed_updates=Update.ALL_TYPES)
-        logging.info("Bot started and running.")
+        log_info("Bot started and running.")
     except Exception as e:
-        error_logger.error("Exception occurred while running the bot", exc_info=True)
+        log_error("Exception occurred while running the bot", exc_info=True)
 
 if __name__ == '__main__':
     main()
